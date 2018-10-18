@@ -1,0 +1,2 @@
+# TelegramChatAnalyzer
+Analize Telegram Chats
