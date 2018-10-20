@@ -61,21 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const peopleMsg = []
 		const callback = waitForCalls(fileInput.files.length, () => {
-			console.log(messagesPerAuthor(peopleMsg))
 
 			let wordsSort = Array.from(countWords(peopleMsg).entries()).sort((a, b) => {
 				return a[1] < b[1]
 			})
 
-			let authorMsgSort = Array.from(messagesPerAuthor(peopleMsg).entries()).sort((a, b) => {
-				return a[1] < b[1]
-			})
+            const authorMsgSort = Array.from(messagesPerAuthor(peopleMsg).entries())
+                .map(([name, value]) => ({name, value}))
+                .sort((a, b) => a.value < b.value)
 
 			let authorVoiceSort = Array.from(countVoice(peopleMsg).entries()).sort((a, b) => {
 				return a[1] < b[1]
 			})
 
-			let body = document.getElementsByTagName("body")[0]
+			let body = document.querySelector(".output")
+            while (body.firstChild) {
+                body.removeChild(body.firstChild)
+            }
 
 			let tbl = document.createElement("table")
 			let tblBody = document.createElement("tbody")
@@ -130,6 +132,52 @@ document.addEventListener('DOMContentLoaded', () => {
 			body.appendChild(tbl2)
 			tbl.setAttribute("border", "2")
 			tbl2.setAttribute("border", "1")
+
+            const canvas = document.createElement('canvas')
+            canvas.width = 500
+            canvas.height = 500
+
+            const context = canvas.getContext('2d')
+            body.appendChild(canvas)
+
+            const {width, height} = canvas
+            const radius = Math.min(width, height) / 2
+
+            const arc = d3.arc()
+                .outerRadius(radius - 10)
+                .innerRadius(radius - 90)
+                .context(context)
+
+            const labelArc = d3.arc()
+                .outerRadius(radius - 50)
+                .innerRadius(radius - 50)
+                .context(context)
+
+            const pie = d3.pie().value(d => d.value)
+            context.translate(width / 2, height / 2)
+
+            const arcs = pie(authorMsgSort)
+            const colors = ["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]
+            arcs.forEach((d, i) => {
+                context.beginPath()
+                arc(d)
+                context.fillStyle = colors[i % colors.length]
+                context.fill()
+            })
+
+            context.beginPath()
+            arcs.forEach(arc)
+            context.strokeStyle = '#fff'
+            context.stroke()
+
+            context.font = '1em'
+            context.textAlign = 'center'
+            context.textBaseline = 'middle'
+            context.fillStyle = '#000'
+            arcs.forEach(d => {
+                const c = labelArc.centroid(d)
+                context.fillText(d.data.name, c[0], c[1])
+            })
 		})
 
 		for (let file of fileInput.files) {
@@ -141,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				const parser = new DOMParser()
 				const doc = parser.parseFromString(result, "text/html")
 				const messages = doc.querySelectorAll(".history .message.default")
-				
+
 				let name = null
 				for (let message of messages) {
 					if (!message.classList.contains("joined")) {
@@ -173,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
 						reply_id = +msgReplyTo.querySelector('a').href.substr(14)  // cut off '#go_to_message'
 						metadata.reply_to = reply_id
 					}
-					
+
 					peopleMsg.push(metadata)
 				}
 				callback()
