@@ -39,8 +39,23 @@ const countVoice = peopleMsg => {
 	for (const {author, duration} of peopleMsg.filter(msg => msg.type === 'voice')) {
 		const [a, b] = counter.get(author) || [0, 0]
 		counter.set(author, [a + 1, b + convertDurationToSeconds(duration)])
-		console.log(duration)
 	}
+	return counter
+}
+
+const countMsgPerHour = peopleMsg => {
+	let counter = new Map()
+	for (const {date} of peopleMsg) {
+		let dateTime = date.split(' ')
+		let time = dateTime[1]
+		let hour = time.split(':')
+		counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
+	}
+	console.log(counter)
+	let counterSorted = Array.from(counter.entries()).sort((a, b) => {
+		return a[0] > b[0]
+	})
+	console.log(counterSorted)
 	return counter
 }
 
@@ -61,6 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		const peopleMsg = []
 		const callback = waitForCalls(fileInput.files.length, () => {
+
+			countMsgPerHour(peopleMsg)
 
 			let wordsSort = Array.from(countWords(peopleMsg).entries()).sort((a, b) => {
 				return a[1] < b[1]
@@ -200,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					const id = +message.id.substr(7)  // cut off 'message'
 
 					const metadata = {id, author: name}
+					metadata.date = message.querySelector('.date').title
 					const msgMediaVoiceMessage = message.querySelector('.media_voice_message')
 					const msgMediaPhoto = message.querySelector('.media')
 					const msgText = message.querySelector('.text')
