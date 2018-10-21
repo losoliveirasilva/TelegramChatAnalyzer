@@ -45,20 +45,12 @@ const countVoice = peopleMsg => {
 
 const countMsgPerHour = (peopleMsg, authorSelected) => {
 	let counter = new Map()
-	if (authorSelected === 'All'){
-		for (const {date} of peopleMsg) {
-			let dateTime = date.split(' ')
-			let time = dateTime[1]
-			let hour = time.split(':')
-			counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
-		}
-	} else {
-		for (const {date} of peopleMsg.filter(msg => msg.author === authorSelected)) {
-			let dateTime = date.split(' ')
-			let time = dateTime[1]
-			let hour = time.split(':')
-			counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
-		}
+	const msg = authorSelected === 'All' ? peopleMsg : peopleMsg.filter(msg => msg.author === authorSelected)
+	for (const {date} of msg) {
+		let dateTime = date.split(' ')
+		let time = dateTime[1]
+		let hour = time.split(':')
+		counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
 	}
 
 	console.log(counter)
