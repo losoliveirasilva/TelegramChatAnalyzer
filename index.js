@@ -43,14 +43,24 @@ const countVoice = peopleMsg => {
 	return counter
 }
 
-const countMsgPerHour = peopleMsg => {
+const countMsgPerHour = (peopleMsg, authorSelected) => {
 	let counter = new Map()
-	for (const {date} of peopleMsg) {
-		let dateTime = date.split(' ')
-		let time = dateTime[1]
-		let hour = time.split(':')
-		counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
+	if (authorSelected === 'All'){
+		for (const {date} of peopleMsg) {
+			let dateTime = date.split(' ')
+			let time = dateTime[1]
+			let hour = time.split(':')
+			counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
+		}
+	} else {
+		for (const {date} of peopleMsg.filter(msg => msg.author === authorSelected)) {
+			let dateTime = date.split(' ')
+			let time = dateTime[1]
+			let hour = time.split(':')
+			counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
+		}
 	}
+
 	console.log(counter)
 	let counterSorted = Array.from(counter.entries()).sort((a, b) => {
 		return a[0] > b[0]
@@ -77,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const peopleMsg = []
 		const callback = waitForCalls(fileInput.files.length, () => {
 
-			countMsgPerHour(peopleMsg)
+			countMsgPerHour(peopleMsg, 'All')
 
 			let wordsSort = Array.from(countWords(peopleMsg).entries()).sort((a, b) => {
 				return a[1] < b[1]
@@ -195,6 +205,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 const c = labelArc.centroid(d)
                 context.fillText(d.data.name, c[0], c[1])
             })
+
+            const authorMsgSortbyName = authorMsgSort.sort((a, b) => a.name > b.name)
+			let selectList = document.createElement("select");
+			selectList.id = "mySelect";
+			body.appendChild(selectList);
+
+			let optionAll = document.createElement('option')
+			optionAll.value = 'All'
+			optionAll.text = 'All'
+			selectList.appendChild(optionAll);
+			for (const {name} of authorMsgSortbyName) {
+				let option = document.createElement("option");
+				option.value = name;
+				option.text = name;
+				selectList.appendChild(option);
+			}
+
 		})
 
 		for (let file of fileInput.files) {
