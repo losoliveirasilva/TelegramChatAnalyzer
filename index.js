@@ -45,20 +45,44 @@ const countVoice = peopleMsg => {
 
 const countMsgPerHour = (peopleMsg, authorSelected) => {
 	let counter = new Map()
-	const msg = authorSelected === 'All' ? peopleMsg : peopleMsg.filter(msg => msg.author === authorSelected)
+	const msg = (authorSelected === 'All') ? peopleMsg : peopleMsg.filter(msg => msg.author === authorSelected)
+	let initHour = 0
+	let initMin = 0
+
+	for (let i = 0; i < 144; i++) {
+		if (initMin === 6) {
+			initHour++
+			initMin = 0
+		}
+		let initTime = (initHour < 10) ? `0${initHour}:${initMin}0` : `${initHour}:${initMin}0`
+		counter.set(initTime, 0)
+		initMin++
+	}
+
 	for (const {date} of msg) {
 		let dateTime = date.split(' ')
 		let time = dateTime[1]
 		let hour = time.split(':')
-		counter.set(hour[0], (counter.get(hour[0]) || 0) + 1)
+		let minDez = Math.floor(hour[1] / 10)
+		let timeFormatted = `${hour[0]}:${minDez}0`
+		counter.set((timeFormatted), (counter.get(timeFormatted) || 0) + 1)
 	}
 
-	console.log(counter)
-	let counterSorted = Array.from(counter.entries()).sort((a, b) => {
+	/*let counterSorted = Array.from(counter.entries()).sort((a, b) => {
 		return a[0] > b[0]
 	})
-	console.log(counterSorted)
+	console.log(counterSorted)*/
 	return counter
+}
+
+const drawChartMsgPerHour = (event, chart, dataset) => {
+	if (event.target.checked) {
+		chart.data.datasets.push(dataset.filter(name => name.label === event.target.name)[0])
+	} else {
+		chart.data.datasets = chart.data.datasets.filter(name => name.label !== event.target.name)
+	}
+
+	chart.update()
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -79,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		const peopleMsg = []
 		const callback = waitForCalls(fileInput.files.length, () => {
 
-			countMsgPerHour(peopleMsg, 'All')
+			let msgPerHour = countMsgPerHour(peopleMsg, 'All')
+			let msgPerHourArr = Array.from(msgPerHour.entries())
 
 			let wordsSort = Array.from(countWords(peopleMsg).entries()).sort((a, b) => {
 				return a[1] < b[1]
@@ -122,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			let counter = 0
 			for (let tableMsg of wordsSort) {
-				if (counter === 2000)
+				if (counter === 5)
 					continue
 				else
 					counter += 1
@@ -198,22 +223,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 context.fillText(d.data.name, c[0], c[1])
             })
 
-            const authorMsgSortbyName = authorMsgSort.sort((a, b) => a.name > b.name)
-			let selectList = document.createElement("select");
-			selectList.id = "mySelect";
-			body.appendChild(selectList);
+			let sectionMsgPerHour = document.createElement('section')
+			sectionMsgPerHour.className = 'sectionMsgPerHour'
 
-			let optionAll = document.createElement('option')
-			optionAll.value = 'All'
-			optionAll.text = 'All'
-			selectList.appendChild(optionAll);
-			for (const {name} of authorMsgSortbyName) {
-				let option = document.createElement("option");
-				option.value = name;
-				option.text = name;
-				selectList.appendChild(option);
+            //const svgElement = document.createElement('svg')
+			//svgElement.setAttribute('id', 'line-chart')
+
+			let msgPerHourArrHours = []
+			let msgPerHourArrValues = []
+			for (let i in msgPerHourArr) {
+				msgPerHourArrHours[i] = msgPerHourArr[i][0]
+				msgPerHourArrValues[i] = msgPerHourArr[i][1]
 			}
 
+            const authorMsgSortbyName = authorMsgSort.sort((a, b) => a.name > b.name)
+			body.appendChild(sectionMsgPerHour)
+
+
+			const authorsList = []
+			const datasetFull = []
+			authorsList.push('All')
+			const datasetAll = {
+				data: msgPerHourArrValues,
+				label: 'All',
+				borderColor: '#123456',
+				fill: false
+			}
+			datasetFull.push(datasetAll)
+
+			const colorList = ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"]
+			let j = 0
+			for (const {name} of authorMsgSortbyName) {
+				authorsList.push(name)
+				let msgPerHourPerAuthor = countMsgPerHour(peopleMsg, name)
+				let msgPerHourPerAuthorArr = Array.from(msgPerHourPerAuthor.entries())
+				let msgPerHourArrPerAuthorValues = []
+				for (let i in msgPerHourPerAuthorArr) {
+					msgPerHourArrPerAuthorValues[i] = msgPerHourPerAuthorArr[i][1]
+				}
+				datasetFull.push({
+					data: msgPerHourArrPerAuthorValues,
+					label: name,
+					borderColor: colorList[j],
+					fill: false
+				})
+				j++
+			}
+
+			let chartMsgPerHour = null
+
+			for (let option in authorsList) {
+				let pair = authorsList[option]
+				let checkbox = document.createElement('input')
+				checkbox.addEventListener('change', (event) => {
+					drawChartMsgPerHour(event, chartMsgPerHour, datasetFull)
+				})
+				checkbox.type = 'checkbox'
+				checkbox.name = pair
+				checkbox.value = pair
+				if (pair === 'All')
+					checkbox.checked = true
+				sectionMsgPerHour.appendChild(checkbox)
+
+				let label = document.createElement('label');
+				label.htmlFor = pair
+
+				label.appendChild(document.createTextNode(pair))
+				sectionMsgPerHour.appendChild(label)
+				sectionMsgPerHour.appendChild(document.createElement('br'))
+
+			}
+
+            const canvasLineChart = document.createElement('canvas')
+            canvasLineChart.width = 600
+            canvasLineChart.height = 400
+			canvasLineChartCtx = canvasLineChart.getContext('2d')
+
+			sectionMsgPerHour.appendChild(canvasLineChart)
+
+			console.log(datasetFull)
+
+			chartMsgPerHour = new Chart(canvasLineChartCtx, {
+				type: 'line',
+				data: {
+					labels: msgPerHourArrHours,
+					datasets: [datasetAll]
+				},
+				options: {
+					scales: {
+						yAxes: [{
+							ticks: {
+								beginAtZero:true
+							}
+						}]
+					}
+				}
+			})
 		})
 
 		for (let file of fileInput.files) {
