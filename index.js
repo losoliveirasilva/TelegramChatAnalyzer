@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					borderColor: colorList[j],
 					fill: false
 				})
-				j = (j === colorList.length())?0:j+1
+				j = (j === colorList.length)?0:j+1
 			}
 
 			let chartMsgPerHour = null
