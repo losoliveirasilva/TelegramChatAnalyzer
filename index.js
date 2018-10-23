@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 			datasetFull.push(datasetAll)
 
-			const colorList = ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"]
+			const colorList = ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850", "#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]
 			let j = 0
 			for (const {name} of authorMsgSortbyName) {
 				authorsList.push(name)
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
 					borderColor: colorList[j],
 					fill: false
 				})
-				j++
+				j = (j === colorList.length())?0:j+1
 			}
 
 			let chartMsgPerHour = null
