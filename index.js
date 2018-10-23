@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body.removeChild(body.firstChild)
             }
 
-			let tbl = document.createElement("table")
+			/*let tbl = document.createElement("table")
 			let tblBody = document.createElement("tbody")
 
 			for (let tableAuthor of authorVoiceSort) {
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			body.appendChild(br)
 			body.appendChild(tbl2)
 			tbl.setAttribute("border", "2")
-			tbl2.setAttribute("border", "1")
+			tbl2.setAttribute("border", "1")*/
 
             const canvas = document.createElement('canvas')
             canvas.width = 500
